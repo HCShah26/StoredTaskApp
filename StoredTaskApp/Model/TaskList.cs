@@ -78,6 +78,14 @@ namespace StoredTaskApp.Model
             }
         }
 
+        public List<Task> ReturnTasks
+        {
+            get
+            {
+                return _tasks;
+            }
+        }
+
         public virtual bool Add_Task_To_List(Task task)
         {
             _tasks.Add(task);

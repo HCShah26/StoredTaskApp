@@ -24,6 +24,13 @@ namespace StoredTaskApp.Model
             _lastCompletionDate = null;
         }
 
+        //Overloaded method created to allow the data to be loaded from a saved file
+        public Habit(string description, string notes, bool task_status, Priority task_priority, DateTime task_creation_date, DateTime? task_completion_date, RepeatCycle repeatCyclePeriod, int streakCount, DateTime? lastCompletionDate) : base(description, notes, task_status, task_priority, task_creation_date, task_completion_date, repeatCyclePeriod)
+        {
+            _streakCount = streakCount;
+            _lastCompletionDate = lastCompletionDate;
+        }
+
         public override void Change_Task_Status()
         {
             if (this.Task_Status == false)

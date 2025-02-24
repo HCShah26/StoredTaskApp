@@ -18,6 +18,12 @@ namespace StoredTaskApp.Model
             _repeatCyclePeriod = repeatCyclePeriod;
         }
 
+        //Overloaded method to allowing loading saved data from file
+        public RepeatingTask(string description, string notes, bool task_status, Priority task_priority, DateTime task_creation_date, DateTime? task_completion_date, RepeatCycle repeatCyclePeriod) : base(description, notes, task_status, task_priority, task_creation_date, task_completion_date)
+        {
+            _repeatCyclePeriod = repeatCyclePeriod;
+        }
+
         public RepeatCycle RepeatCyclePeriod
         {
             get

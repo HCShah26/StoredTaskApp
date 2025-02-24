@@ -39,6 +39,17 @@ namespace StoredTaskApp.Model
             _task_creation_date = DateTime.Now;
         }
 
+        //Overloaded method to allow the data to be loaded from a saved file
+        public Task(string description, string notes, bool task_status, Priority task_priority, DateTime task_creation_date, DateTime? task_completion_date)
+        {
+            _description = description;
+            _notes = notes;
+            _task_status= task_status;
+            _task_priority= task_priority;
+            _task_completion_date = task_creation_date;
+            _task_completion_date = task_completion_date;
+        }
+
         public string Description
         {
             get

@@ -218,7 +218,7 @@ namespace StoredTaskApp
             //Create Tasklist
             tasklist0 = CreateTaskList0(task0, task1, task2, task3, repeatingTask0);
 
-            tasklist1 = CreateTaskList1(task2, task3);
+            tasklist1 = CreateTaskList1(task2, task3, habit0, repeatingTask0);
 
             tasklist2 = CreateTaskList2(task0, task3);
 
@@ -253,7 +253,7 @@ namespace StoredTaskApp
             taskCollection.Add_TaskListToCollection(project);
             Log_Debug_Message(taskCollection);
 
-
+            bool savedSuccessfully = taskCollection.SaveTaskCollection();
         }
 
         private TaskList CreateTaskList0(Task task0, Task task1, Task task2, Task task3, RepeatingTask repeatTask)
@@ -299,7 +299,7 @@ namespace StoredTaskApp
             return tasklist;
         }
 
-        private TaskList CreateTaskList1(Task task2, Task task3)
+        private TaskList CreateTaskList1(Task task2, Task task3, Habit habit, RepeatingTask repeatingTask)
         {
             string errorMsg;
             TaskList tasklist;
@@ -314,6 +314,14 @@ namespace StoredTaskApp
             Debug.WriteLine("Add Task 4 to TaskList (Another List)");
             errorMsg = "Failed to add Task 4 to TaskList (Another List)";
             tasklist = AddTaskToList(tasklist, task3, errorMsg);
+
+            Debug.WriteLine("Add a Habit Task to TaskList (Another List)");
+            errorMsg = "Failed to add Task 4 to TaskList (Another List)";
+            tasklist = AddTaskToList(tasklist, habit, errorMsg);
+
+            Debug.WriteLine("Add a Repeating Task 4 to TaskList (Another List)");
+            errorMsg = "Failed to add Task 4 to TaskList (Another List)";
+            tasklist = AddTaskToList(tasklist, repeatingTask, errorMsg);
 
             Debug.WriteLine("Displaying all the tasks for Tasklist (Another List)");
             tasklist.Display_Tasks();
