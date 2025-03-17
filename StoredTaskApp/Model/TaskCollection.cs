@@ -20,7 +20,7 @@ namespace StoredTaskApp.Model
 
     public class TaskCollection
     {
-        private List<TaskList> _tasklists;
+        private List<TaskList> _taskCollection;
 
         public int Count
         {
@@ -29,8 +29,8 @@ namespace StoredTaskApp.Model
                 //Only count items for lists that are not empty
                 int tempCount = 0;
 
-                if (_tasklists != null)
-                    foreach (TaskList tasklist in _tasklists)
+                if (_taskCollection != null)
+                    foreach (TaskList tasklist in _taskCollection)
                         tempCount += tasklist.Count;
 
                 return tempCount;
@@ -44,8 +44,8 @@ namespace StoredTaskApp.Model
                 //Only count incomplete tasks for lists that are not empty
                 int tempCount = 0;
 
-                if (_tasklists != null)
-                    foreach (TaskList tasklist in _tasklists)
+                if (_taskCollection != null)
+                    foreach (TaskList tasklist in _taskCollection)
                         tempCount += tasklist.Count_Of_Incomplete_Tasks;
 
                 return tempCount;
@@ -55,41 +55,41 @@ namespace StoredTaskApp.Model
         public void Add_TaskListToCollection(TaskList tasklist)
         {
             //Check if the _tasklists has been initialised, if not then initialise before adding the Task List
-            if (_tasklists == null)
-                _tasklists = new List<TaskList>();
+            if (_taskCollection == null)
+                _taskCollection = new List<TaskList>();
 
-            _tasklists.Add(tasklist);
+            _taskCollection.Add(tasklist);
         }
 
         public void Remove_All_Completed_Tasks()
         {
-            if (_tasklists != null)
+            if (_taskCollection != null)
             {
-                foreach (TaskList tasklist in _tasklists)
+                foreach (TaskList tasklist in _taskCollection)
                     tasklist.Remove_Completed_Tasks();
             }
         }
 
         public bool LoadTaskCollection()
         { 
-            return _tasklists != null; 
+            return _taskCollection != null; 
         }
 
-        public async bool SaveTaskCollection()
+        public bool SaveTaskCollection()
         {
-            StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
-            if (storageFolder == null)
-            {  
-                return false;
-            }
+            //StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
+            //if (storageFolder == null)
+            //{  
+            //    return false;
+            //}
 
-            StorageFile file = await storageFolder.CreateFileAsync("myFile.bin", CreationCollisionOption.ReplaceExisting);
+            //StorageFile file = await storageFolder.CreateFileAsync("myFile.bin", CreationCollisionOption.ReplaceExisting);
 
-            using (var stream = File.Open(file.Path, FileMode.Create))
-            {
+            //using (var stream = File.Open(file.Path, FileMode.Create))
+            //{
                 Debug.WriteLine($"This collection has {this.Count} tasks");
-                Debug.WriteLine($"This collection has {_tasklists.Count} lists");
-                foreach (var taskList in _tasklists)
+                Debug.WriteLine($"This collection has {_taskCollection.Count} lists");
+                foreach (var taskList in _taskCollection)
                 {
                     Debug.WriteLine($"Tasklist type is '{taskList.GetType().ToString()}'");
                     foreach (var taskitem in (List<Task>)taskList.ReturnTasks)
@@ -100,6 +100,7 @@ namespace StoredTaskApp.Model
                             case "StoredTaskApp.Model.Task":
                                 {
                                     Task currentTask = (Task)taskitem;
+                                    Debug.WriteLine($"Task");
                                     Debug.WriteLine($"      Task Data Information Description -     {currentTask.Description}");
                                     Debug.WriteLine($"      Task Data Information Notes -           {currentTask.Notes}");
                                     Debug.WriteLine($"      Task Data Information Status -          {currentTask.Task_Status}");
@@ -111,6 +112,7 @@ namespace StoredTaskApp.Model
                             case "StoredTaskApp.Model.RepeatingTask":
                                 {
                                     RepeatingTask currentTask = (RepeatingTask)taskitem;
+                                    Debug.WriteLine($"RepeatingTask");
                                     Debug.WriteLine($"      Repeating Task Data Information Description -       {currentTask.Description}");
                                     Debug.WriteLine($"      Repeating Task Data Information Notes -             {currentTask.Notes}");
                                     Debug.WriteLine($"      Repeating Task Data Information Status -            {currentTask.Task_Status}");
@@ -122,6 +124,7 @@ namespace StoredTaskApp.Model
                             case "StoredTaskApp.Model.Habit":
                                 {
                                     Habit currentTask = (Habit)taskitem;
+                                    Debug.WriteLine($"Habit");
                                     Debug.WriteLine($"      Habit Task Data Information Description -       {currentTask.Description}");
                                     Debug.WriteLine($"      Habit Task Data Information Notes -             {currentTask.Notes}");
                                     Debug.WriteLine($"      Habit Task Data Information Status -            {currentTask.Task_Status}");
@@ -131,14 +134,13 @@ namespace StoredTaskApp.Model
                                     Debug.WriteLine($"      Habit Task Data Information Streak Count -      {currentTask.StreakCount}");
                                     Debug.WriteLine($"      Habit Task Data Information Last Comp. Date-    {currentTask.LastCompletionDate}");
                                     break;
-
                                 }
                         }
                     }
                 }
 
-            }
-            return _tasklists != null; 
+            //}
+            return _taskCollection != null; 
         }
 
     }
