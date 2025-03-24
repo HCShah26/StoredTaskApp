@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Automation.Peers;
@@ -52,6 +53,14 @@ namespace StoredTaskApp.Model
             }
         }
 
+        public List<TaskList> TaskLists
+        {
+            get
+            {
+                return _taskCollection;
+            }
+        }
+
         public void Add_TaskListToCollection(TaskList tasklist)
         {
             //Check if the _tasklists has been initialised, if not then initialise before adding the Task List
@@ -75,73 +84,11 @@ namespace StoredTaskApp.Model
             return _taskCollection != null; 
         }
 
-        public bool SaveTaskCollection()
+        public async Task<bool> SaveTaskCollectionAsync()
         {
-            //StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
-            //if (storageFolder == null)
-            //{  
-            //    return false;
-            //}
-
-            //StorageFile file = await storageFolder.CreateFileAsync("myFile.bin", CreationCollisionOption.ReplaceExisting);
-
-            //using (var stream = File.Open(file.Path, FileMode.Create))
-            //{
-                Debug.WriteLine($"This collection has {this.Count} tasks");
-                Debug.WriteLine($"This collection has {_taskCollection.Count} lists");
-                foreach (var taskList in _taskCollection)
-                {
-                    Debug.WriteLine($"Tasklist type is '{taskList.GetType().ToString()}'");
-                    foreach (var taskitem in (List<Task>)taskList.ReturnTasks)
-                    {
-                        Debug.WriteLine($"  Task type is '{taskitem.GetType().ToString()}'");
-                        switch (taskitem.GetType().ToString())
-                        {
-                            case "StoredTaskApp.Model.Task":
-                                {
-                                    Task currentTask = (Task)taskitem;
-                                    Debug.WriteLine($"Task");
-                                    Debug.WriteLine($"      Task Data Information Description -     {currentTask.Description}");
-                                    Debug.WriteLine($"      Task Data Information Notes -           {currentTask.Notes}");
-                                    Debug.WriteLine($"      Task Data Information Status -          {currentTask.Task_Status}");
-                                    Debug.WriteLine($"      Task Data Information Priority -        {currentTask.Task_Priority}");
-                                    Debug.WriteLine($"      Task Data Information Creation Date -   {currentTask.Task_Creation_Date}");
-                                    Debug.WriteLine($"      Task Data Information Completion Date - {currentTask.Task_Completion_Date}");
-                                    break;
-                                }
-                            case "StoredTaskApp.Model.RepeatingTask":
-                                {
-                                    RepeatingTask currentTask = (RepeatingTask)taskitem;
-                                    Debug.WriteLine($"RepeatingTask");
-                                    Debug.WriteLine($"      Repeating Task Data Information Description -       {currentTask.Description}");
-                                    Debug.WriteLine($"      Repeating Task Data Information Notes -             {currentTask.Notes}");
-                                    Debug.WriteLine($"      Repeating Task Data Information Status -            {currentTask.Task_Status}");
-                                    Debug.WriteLine($"      Repeating Task Data Information Priority -          {currentTask.Task_Priority}");
-                                    Debug.WriteLine($"      Repeating Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
-                                    Debug.WriteLine($"      Repeating Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
-                                    break;
-                                }
-                            case "StoredTaskApp.Model.Habit":
-                                {
-                                    Habit currentTask = (Habit)taskitem;
-                                    Debug.WriteLine($"Habit");
-                                    Debug.WriteLine($"      Habit Task Data Information Description -       {currentTask.Description}");
-                                    Debug.WriteLine($"      Habit Task Data Information Notes -             {currentTask.Notes}");
-                                    Debug.WriteLine($"      Habit Task Data Information Status -            {currentTask.Task_Status}");
-                                    Debug.WriteLine($"      Habit Task Data Information Priority -          {currentTask.Task_Priority}");
-                                    Debug.WriteLine($"      Habit Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
-                                    Debug.WriteLine($"      Habit Task Data Information Completion Date-    {currentTask.Task_Completion_Date}");
-                                    Debug.WriteLine($"      Habit Task Data Information Streak Count -      {currentTask.StreakCount}");
-                                    Debug.WriteLine($"      Habit Task Data Information Last Comp. Date-    {currentTask.LastCompletionDate}");
-                                    break;
-                                }
-                        }
-                    }
-                }
-
-            //}
-            return _taskCollection != null; 
+            return await TaskCollectionSerializer.SaveAsync(this);
         }
+
 
     }
 }

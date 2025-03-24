@@ -112,6 +112,10 @@ namespace StoredTaskApp
             CreateCollection(out taskcollection, tasklist0, tasklist1, tasklist2, project);
             Debug.WriteLine("TaskCollection creation complete");
 
+            Debug.WriteLine("Saving the newly created TaskCollection Class to binary file");
+            System.Threading.Tasks.Task<bool> savedSuccefully = taskcollection.SaveTaskCollectionAsync();
+            Debug.WriteLine($"The call SaveTaskCollectionAsyn was successfull? {savedSuccefully}");
+
         }
 
         private void CreateTasks(out Task task0, out Task task1, out Task task2, out Task task3)
@@ -252,8 +256,6 @@ namespace StoredTaskApp
             Debug.WriteLine($"Adding Project (Pre-Construction Phase) to Collection - Count = {project.Count} & Incomplete count = {project.Count_Of_Incomplete_Tasks}");
             taskCollection.Add_TaskListToCollection(project);
             Log_Debug_Message(taskCollection);
-
-            bool savedSuccessfully = taskCollection.SaveTaskCollection();
         }
 
         private TaskList CreateTaskList0(Task task0, Task task1, Task task2, Task task3, RepeatingTask repeatTask)

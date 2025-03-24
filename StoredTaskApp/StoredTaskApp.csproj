@@ -129,6 +129,7 @@
     <Compile Include="Model\RepeatingTask.cs" />
     <Compile Include="Model\Task.cs" />
     <Compile Include="Model\TaskCollection.cs" />
+    <Compile Include="Model\TaskCollectionSerializer.cs" />
     <Compile Include="Model\TaskList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
