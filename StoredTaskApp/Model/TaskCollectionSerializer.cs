@@ -8,6 +8,9 @@ using Windows.Storage;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using static System.Net.WebRequestMethods;
+using StoredTaskApp.Enums;
+
 
 namespace StoredTaskApp.Model
 {
@@ -22,23 +25,27 @@ namespace StoredTaskApp.Model
             {
                 StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
                 StorageFile file = await storageFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
+                Debug.WriteLine($"File location: {storageFolder.Path}");
 
-                using (var stream = File.Open(file.Path, FileMode.Create))
+                using (var stream = System.IO.File.Open(file.Path, FileMode.Create))
                 {
-                    using (var writer = new BinaryWriter(stream, Encoding.UTF8))
+                    using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
                     {
-                        writer.Write(taskCollection.Count); // First item stored in the binary file is the count of lists stored in the TaskCollection class
-                        Debug.WriteLine($"This collection has {taskCollection.Count} lists");
+                        writer.Write(taskCollection.TaskLists.Count); // First item stored in the binary file is the count of lists stored in the TaskCollection class
+                        Debug.WriteLine($"This collection has {taskCollection.TaskLists.Count} lists");
                         foreach (var taskList in taskCollection.TaskLists)
                         {
                             writer.Write(taskList.GetType().ToString());
                             writer.Write(taskList.Count);
+                            writer.Write(taskList.Name);
 
                             Debug.WriteLine($"Tasklist type is '{taskList.GetType().ToString()}'");
                             Debug.WriteLine($"TaskList count is {taskList.Count}");
+                            Debug.WriteLine($"TaskList Name is {taskList.Name}");
 
                             foreach (var taskitem in (List<Task>)taskList.ReturnTasks)
                             {
+                                writer.Write(taskitem.GetType().ToString());
                                 Debug.WriteLine($"  Task type is '{taskitem.GetType().ToString()}'");
                                 switch (taskitem.GetType().ToString())
                                 {
@@ -79,6 +86,7 @@ namespace StoredTaskApp.Model
                                             {
                                                 writer.Write(currentTask.Task_Completion_Date.Value.Ticks);
                                             }
+                                            writer.Write((int)currentTask.RepeatCyclePeriod);
 
                                             Debug.WriteLine($"RepeatingTask");
                                             Debug.WriteLine($"      Repeating Task Data Information Description -       {currentTask.Description}");
@@ -87,6 +95,7 @@ namespace StoredTaskApp.Model
                                             Debug.WriteLine($"      Repeating Task Data Information Priority -          {currentTask.Task_Priority.Value}");
                                             Debug.WriteLine($"      Repeating Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
                                             Debug.WriteLine($"      Repeating Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
+                                            Debug.WriteLine($"      Repeating Task Data Information Repeat Cycle -      {(int)currentTask.RepeatCyclePeriod}");
                                             //SavedSuccessFully = SaveRepeatingTask((RepeatingTask)taskitem, writer);
                                             break;
                                         }
@@ -103,6 +112,7 @@ namespace StoredTaskApp.Model
                                             {
                                                 writer.Write(currentTask.Task_Completion_Date.Value.Ticks); // Converting Task_Completion_Date to long
                                             }
+                                            writer.Write((int)currentTask.RepeatCyclePeriod);
                                             writer.Write(currentTask.StreakCount);
                                             if (currentTask.LastCompletionDate == null)
                                             {
@@ -122,7 +132,8 @@ namespace StoredTaskApp.Model
                                             Debug.WriteLine($"      Habit Task Data Information Status -            {currentTask.Task_Status}");
                                             Debug.WriteLine($"      Habit Task Data Information Priority -          {currentTask.Task_Priority.Value}");
                                             Debug.WriteLine($"      Habit Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
-                                            Debug.WriteLine($"      Habit Task Data Information Completion Date-    {currentTask.Task_Completion_Date}");
+                                            Debug.WriteLine($"      Habit Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
+                                            Debug.WriteLine($"      Habit Task Date Information Repeat Cycle -      {(int)currentTask.RepeatCyclePeriod}");
                                             Debug.WriteLine($"      Habit Task Data Information Streak Count -      {currentTask.StreakCount}");
                                             Debug.WriteLine($"      Habit Task Data Information Last Comp. Date-    {currentTask.LastCompletionDate}");
                                             //SavedSuccessFully = SaveHabit((Habit)taskitem, writer);
@@ -131,6 +142,7 @@ namespace StoredTaskApp.Model
                                 }
                             }
                         }
+                        writer.Dispose();
                     }
                 }
                 return true; // Saved successfully
@@ -139,6 +151,148 @@ namespace StoredTaskApp.Model
             {
                 Debug.WriteLine(e.Message);
                 return false; // An error occured - file not saved successfully
+            }
+        }
+
+        public static TaskCollection LoadAsync(TaskCollection taskCollection) //The input TaskCollection is only temporary measure whilst the Load Method is built!!!
+        {
+            try
+            {
+                Debug.WriteLine("Attempting to read myFile.bin");
+                StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
+
+                Debug.WriteLine($"Folder location to read the file: {storageFolder.Path}\\{Filename}");
+
+                string taskType;
+                string task_desc;
+                string task_notes;
+                bool task_status;
+                Priority task_priority;
+                DateTime task_Creation_Date;
+                bool completion_date_has_value;
+                DateTime task_Completion_Date;
+                RepeatCycle repeatCycle;
+                int streakCount;
+                bool lastcompletion_has_value;
+                DateTime lastCompletionDate;
+
+                StoredTaskApp.Model.TaskCollection savedTaskCollection;
+                
+                using (var stream = System.IO.File.Open(storageFolder.Path + "\\" + Filename, FileMode.Open))
+                {
+                    Debug.WriteLine($"The content of stream: {stream.Length}");
+
+                    using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
+                    { 
+                        //Create  a new TaskCollection
+                        savedTaskCollection = new TaskCollection();
+
+                        int taskCollection_count = reader.ReadInt32(); //Stores the number of TaskLists in the TaskCollection
+
+                        for (int tc_count = 0; tc_count < taskCollection_count; tc_count++)
+                        {
+                            string tList_Type = reader.ReadString(); //Stores the Type of TaskList (TaskList or Project)
+                            int tasklist_count = reader.ReadInt32(); //Stores the number of different tasks there are in this tasklist or project
+                            string tlist_Name = reader.ReadString(); //Store the name of this Tasklist or Project;
+
+                            Debug.WriteLine($"Tasklist Type: {tList_Type}");
+                            Debug.WriteLine($"The Task Collection has {taskCollection_count} Task Lists");
+                            Debug.WriteLine($"This TaskList name: {tlist_Name}");
+
+                            if (tList_Type == "StoredTaskApp.Model.TaskList")
+                            {
+                                StoredTaskApp.Model.TaskList currentTaskList = new TaskList(tlist_Name);
+                            }
+                            else if (tList_Type == "StoredTaskApp.Model.Project") 
+                            {
+                                StoredTaskApp.Model.Project currentTaskList = new Project(tlist_Name);
+                            }
+                            else 
+                            {
+                                //Error has occured!!!
+                            }
+
+
+                            for (int tlist_count = 0; tlist_count < tasklist_count; tlist_count++)
+                            {
+                                StoredTaskApp.Model.Task tempTask;
+                                StoredTaskApp.Model.RepeatingTask tempRepeatingTask;
+                                StoredTaskApp.Model.Habit tempHabit;
+
+                                taskType = reader.ReadString();
+                                task_desc = reader.ReadString(); // writer.Write(currentTask.Description);
+                                task_notes = reader.ReadString(); //writer.Write(currentTask.Notes);
+                                task_status = reader.ReadBoolean(); // writer.Write(currentTask.Task_Status);
+                                task_priority.Value = reader.ReadInt32(); //writer.Write(currentTask.Task_Priority.Value);
+                                task_Creation_Date = new DateTime(reader.ReadInt64());  //writer.Write(currentTask.Task_Creation_Date.Ticks);
+                                completion_date_has_value = reader.ReadBoolean(); //writer.Write(currentTask.Task_Completion_Date.HasValue);
+                                if (completion_date_has_value)
+                                {
+                                    task_Completion_Date = new DateTime(reader.ReadInt64()); //writer.Write(currentTask.Task_Completion_Date.Value.Ticks);
+                                    tempTask = new Task(task_desc, task_notes, task_status, task_priority, task_Creation_Date, task_Completion_Date);
+                                }
+                                else
+                                {
+                                    tempTask = new Task(task_desc, task_notes, task_status, task_priority, task_Creation_Date, null);
+                                }
+                                if (taskType == "StoredTaskApp.Model.RepeatingTask")
+                                {
+                                    repeatCycle = (RepeatCycle)reader.ReadInt32(); //writer.Write((int)currentTask.RepeatCyclePeriod);
+                                    StoredTaskApp.Model.RepeatingTask currentTask = new RepeatingTask(tempTask.Description, tempTask.Notes, tempTask.Task_Status, tempTask.Task_Priority, tempTask.Task_Creation_Date, tempTask.Task_Completion_Date, repeatCycle);
+                                    tempRepeatingTask = currentTask;
+                                }
+                                else if (taskType == "StoredTaskApp.Model.Habit")
+                                {
+                                    repeatCycle = (RepeatCycle)reader.ReadInt32(); //writer.Write((int)currentTask.RepeatCyclePeriod);
+                                    streakCount = reader.ReadInt32();
+                                    lastcompletion_has_value = reader.ReadBoolean();
+                                    if (lastcompletion_has_value)
+                                    {
+                                        lastCompletionDate = new DateTime(reader.ReadInt64());
+                                        StoredTaskApp.Model.Habit currentTask = new Habit(tempTask.Description, tempTask.Notes, tempTask.Task_Status, tempTask.Task_Priority, tempTask.Task_Creation_Date, tempTask.Task_Completion_Date, repeatCycle, streakCount, lastCompletionDate);
+                                        tempHabit = currentTask;
+                                    }
+                                    else
+                                    {
+                                        StoredTaskApp.Model.Habit currentTask = new Habit(tempTask.Description, tempTask.Notes, tempTask.Task_Status, tempTask.Task_Priority, tempTask.Task_Creation_Date, tempTask.Task_Completion_Date, repeatCycle, streakCount, null);
+                                        tempHabit = currentTask;
+                                    }
+                                }
+                                else if (taskType == "StoredTaskApp.Model.Task")
+                                {
+                                    StoredTaskApp.Model.Task currentTask = tempTask;
+                                }
+
+                                //Todo create a switch case to store the correct object into var task                               
+
+                                Debug.WriteLine("Task object created");
+                                Debug.WriteLine($"Task Description      : {task.Description}");
+                                Debug.WriteLine($"Task Notes            : {task.Notes}");
+                                Debug.WriteLine($"Task Status           : {task.Task_Status}");
+                                Debug.WriteLine($"Task Priority         : {task.Task_Priority}");
+                                Debug.WriteLine($"Task Creation Date    : {task.Task_Creation_Date}");
+                                Debug.WriteLine($"Task Completion Date  : {task.Task_Completion_Date}");
+                                if ( taskType == "StoredTaskApp.Model.RepeatingTask")
+                                {
+                                    Debug.WriteLine($"Task Repeat Cycle     : {task.RepeatCyclePeriod}");
+                                }
+                                else if ( taskType == "StoredTaskApp.Model.Habit")
+                                {
+                                    Debug.WriteLine($"Task Repeat Cycle     : {task.RepeatCyclePeriod}");
+                                    Debug.WriteLine($"Task Streak Count     : {task.StreakCount}");
+                                    Debug.WriteLine($"Task Last Completion  : {task.LastCompletionDate}");
+                                }
+                            }
+                        }
+                    }
+                }
+                return taskCollection;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("An error occured trying to read myFile.bin");
+                Debug.WriteLine(e.Message);
+                return null;
             }
         }
 

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI.Notifications;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -112,9 +113,15 @@ namespace StoredTaskApp
             CreateCollection(out taskcollection, tasklist0, tasklist1, tasklist2, project);
             Debug.WriteLine("TaskCollection creation complete");
 
+            StoreDataAsync(taskcollection);
+        }
+
+        private async void StoreDataAsync(TaskCollection taskCollection)
+        {
             Debug.WriteLine("Saving the newly created TaskCollection Class to binary file");
-            System.Threading.Tasks.Task<bool> savedSuccefully = taskcollection.SaveTaskCollectionAsync();
-            Debug.WriteLine($"The call SaveTaskCollectionAsyn was successfull? {savedSuccefully}");
+            bool savedSuccessfully = await TaskCollectionSerializer.SaveAsync(taskCollection);
+            Debug.WriteLine($"The call SaveTaskCollectionAsyn was successfull? {savedSuccessfully}");
+            TaskCollection savedTC = TaskCollectionSerializer.LoadAsync(taskCollection);
 
         }
 
