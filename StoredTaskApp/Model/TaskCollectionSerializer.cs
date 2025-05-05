@@ -179,13 +179,13 @@ namespace StoredTaskApp.Model
                 StoredTaskApp.Model.TaskCollection savedTaskCollection;
                 StoredTaskApp.Model.TaskList taskList;
                 StoredTaskApp.Model.Project project;
-                
+
                 using (var stream = System.IO.File.Open(storageFolder.Path + "\\" + Filename, FileMode.Open))
                 {
                     Debug.WriteLine($"The content of stream: {stream.Length}");
 
                     using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
-                    { 
+                    {
                         //Create  a new TaskCollection
                         savedTaskCollection = new TaskCollection();
 
@@ -206,12 +206,12 @@ namespace StoredTaskApp.Model
                                 StoredTaskApp.Model.TaskList currentTaskList = new TaskList(tlist_Name);
                                 taskList = currentTaskList;
                             }
-                            else if (tList_Type == "StoredTaskApp.Model.Project") 
+                            else if (tList_Type == "StoredTaskApp.Model.Project")
                             {
                                 StoredTaskApp.Model.Project currentTaskList = new Project(tlist_Name);
                                 project = currentTaskList;
                             }
-                            else 
+                            else
                             {
                                 //Error has occured!!!
                             }
@@ -269,63 +269,69 @@ namespace StoredTaskApp.Model
 
                                 //Todo create a switch case to store the correct object into var task
                                 if (tList_Type == "StoredTaskApp.Model.Project")
-                                    switch (taskType)
-                                    {
-                                        case "StoredTaskApp.Model.Task":
-                                            {
-                                                project.Add_Task_To_List(tempTask);
-                                                break;
-                                            }
-                                        case "StoredTaskApp.Model.RepeatingTask":
-                                            {
-                                                project.Add_Task_To_List(tempRepeatingTask);
-                                                break;
-                                            }
-                                        case "StoredTaskApp.Model.Habit":
-                                            {
-                                                //This should never happen as Habit can not be in the Project
-                                                //project.Add_Task_To_List(tempHabit);
-                                                break;
-                                            }
-                                    }
-                                else
                                 {
                                     switch (taskType)
                                     {
                                         case "StoredTaskApp.Model.Task":
+                                        {
+                                            if (project<> null)
                                             {
-                                                taskList.Add_Task_To_List(tempTask);
-                                                break;
+                                                project.Add_Task_To_List(tempTask);
                                             }
+                                            break;
+                                        }
                                         case "StoredTaskApp.Model.RepeatingTask":
-                                            {
-                                                taskList.Add_Task_To_List(tempRepeatingTask);
-                                                break;
-                                            }
+                                        {
+                                            project.Add_Task_To_List(tempRepeatingTask);
+                                            break;
+                                        }
                                         case "StoredTaskApp.Model.Habit":
-                                            {
-                                                taskList.Add_Task_To_List(tempHabit);
-                                                break;
-                                            }
+                                        {
+                                            //This should never happen as Habit can not be in the Project
+                                            //project.Add_Task_To_List(tempHabit);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    switch (taskType)
+                                    {
+                                //        case "StoredTaskApp.Model.Task":
+                                //            {
+                                //                taskList.Add_Task_To_List(tempTask);
+                                //                break;
+                                //            }
+                                //        case "StoredTaskApp.Model.RepeatingTask":
+                                //            {
+                                //                taskList.Add_Task_To_List(tempRepeatingTask);
+                                //                break;
+                                //            }
+                                //        case "StoredTaskApp.Model.Habit":
+                                //            {
+                                //                taskList.Add_Task_To_List(tempHabit);
+                                //                break;
+                                //            }
                                     }
                                 }
 
-                                    Debug.WriteLine("Task object created");
+                                Debug.WriteLine("Task object created");
                                 Debug.WriteLine($"Task Description      : {tempTask.Description}");
                                 Debug.WriteLine($"Task Notes            : {tempTask.Notes}");
                                 Debug.WriteLine($"Task Status           : {tempTask.Task_Status}");
                                 Debug.WriteLine($"Task Priority         : {tempTask.Task_Priority}");
                                 Debug.WriteLine($"Task Creation Date    : {tempTask.Task_Creation_Date}");
                                 Debug.WriteLine($"Task Completion Date  : {tempTask.Task_Completion_Date}");
+                                
                                 if ( taskType == "StoredTaskApp.Model.RepeatingTask")
                                 {
-                                    Debug.WriteLine($"Task Repeat Cycle     : {tempRepeatingTask.RepeatCyclePeriod}");
+                                    Debug.WriteLine($"Task Repeat Cycle     : "); //{tempRepeatingTask.RepeatCyclePeriod}");
                                 }
                                 else if ( taskType == "StoredTaskApp.Model.Habit")
                                 {
-                                    Debug.WriteLine($"Task Repeat Cycle     : {tempHabit.RepeatCyclePeriod}");
-                                    Debug.WriteLine($"Task Streak Count     : {tempHabit.StreakCount}");
-                                    Debug.WriteLine($"Task Last Completion  : {tempHabit.LastCompletionDate}");
+                                    Debug.WriteLine($"Task Repeat Cycle     : "); // {tempHabit.RepeatCyclePeriod}");
+                                    Debug.WriteLine($"Task Streak Count     : "); // {tempHabit.StreakCount}");
+                                    Debug.WriteLine($"Task Last Completion  : "); // {tempHabit.LastCompletionDate}");
                                 }
                             }
                         }
