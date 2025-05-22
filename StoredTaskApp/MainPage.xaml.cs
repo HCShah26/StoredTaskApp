@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Notifications;
@@ -29,8 +30,41 @@ namespace StoredTaskApp
         public MainPage()
         {
             this.InitializeComponent();
+        }
 
-            Task my_Task0, my_Task1, my_Task2, my_Task3;
+        /// <summary>
+        /// Called when page is navigated to. Loads existing task collection or creates test data in none exists 
+        /// </summary>
+        /// <param name="e"></param>
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        {
+            TaskCollection my_TaskCollection = null;
+
+            // Call function to load data from binary file
+            my_TaskCollection = await LoadTaskCollection();
+
+            if (my_TaskCollection == null)
+            {
+                // No data found - create sample data and store it to binary file
+                my_TaskCollection = CreateTestData();
+                StoreDataAsync(my_TaskCollection);
+                DisplayTaskCollection(my_TaskCollection);
+            }
+            else
+            {
+                //Display loaded data from binary file
+                DisplayTaskCollection(my_TaskCollection);
+            }
+
+        }
+
+        /// <summary>
+        /// Create sample test data including Tasks, RepeatingTasks, Habits, TaskList and Project
+        /// </summary>
+        /// <returns></returns>
+        private TaskCollection CreateTestData()
+        {
+            StoredTaskApp.Model.Task my_Task0, my_Task1, my_Task2, my_Task3;
             RepeatingTask my_RepeatingTask0, my_RepeatingTask1, my_RepeatingTask2;
             Habit habit0, habit1, habit2;
             TaskList my_TaskList0, my_TaskList1, my_TaskList2;
@@ -40,12 +74,14 @@ namespace StoredTaskApp
             Debug.WriteLine("-----------------------------------------------------------------------------------------------------------------");
             Debug.WriteLine("Testing TaskApp functionality - Started");
 
+            // Test priority functionality first
             Test_Priority_Functionality();
 
             Debug.WriteLine("");
             Debug.WriteLine("Test TaskApp Funtionality - Started");
             Debug.WriteLine("");
 
+            // Initialise all objects of the StoredTaskApp.Model
             Test_TaskApp_Functionality(out my_Task0, out my_Task1, out my_Task2, out my_Task3,
                 out my_RepeatingTask0, out my_RepeatingTask1, out my_RepeatingTask2,
                 out habit0, out habit1, out habit2,
@@ -59,8 +95,12 @@ namespace StoredTaskApp
             Debug.WriteLine("Testing TaskApp functionality - Completed");
             Debug.WriteLine("-----------------------------------------------------------------------------------------------------------------");
 
+            return my_TaskCollection;
         }
 
+        /// <summary>
+        /// Tests the increment and decrement behaviour of the Priority Class
+        /// </summary>
         private void Test_Priority_Functionality()
         {
 
@@ -90,7 +130,29 @@ namespace StoredTaskApp
             Debug.WriteLine("");
         }
 
-        private void Test_TaskApp_Functionality(out Task task0, out Task task1, out Task task2, out Task task3,
+        /// <summary>
+        /// This functions will test all the functionality of the StoredTaskApp classes including 
+        /// Task, RepeatingTask & Habit objects
+        /// TaskList and Project object that will hold a collection of Tasks / RepeatingTasks / Habits
+        /// TaskCollection which holds a collection of TaskLists or Projects
+        /// </summary>
+        /// <param name="task0"></param>
+        /// <param name="task1"></param>
+        /// <param name="task2"></param>
+        /// <param name="task3"></param>
+        /// <param name="repeatingTask0"></param>
+        /// <param name="repeatingTask1"></param>
+        /// <param name="repeatingTask2"></param>
+        /// <param name="habit0"></param>
+        /// <param name="habit1"></param>
+        /// <param name="habit2"></param>
+        /// <param name="tasklist0"></param>
+        /// <param name="tasklist1"></param>
+        /// <param name="tasklist2"></param>
+        /// <param name="project"></param>
+        /// <param name="taskcollection"></param>
+        private void Test_TaskApp_Functionality(out StoredTaskApp.Model.Task task0, out StoredTaskApp.Model.Task task1, 
+            out StoredTaskApp.Model.Task task2, out StoredTaskApp.Model.Task task3,
             out RepeatingTask repeatingTask0, out RepeatingTask repeatingTask1, out RepeatingTask repeatingTask2,
             out Habit habit0, out Habit habit1, out Habit habit2,
             out TaskList tasklist0, out TaskList tasklist1, out TaskList tasklist2, out Project project,
@@ -100,7 +162,7 @@ namespace StoredTaskApp
 
             CreateRepeatingTasks(out repeatingTask0, out repeatingTask1, out repeatingTask2);
 
-            CreateHabitTasks(out habit0, out habit1, out habit2, repeatingTask0, repeatingTask1, repeatingTask2);
+            CreateHabitTasks(out habit0, out habit1, out habit2);
 
             Debug.WriteLine("Creating all TaskList Classes");
             CreateTaskLists(out tasklist0, out tasklist1, out tasklist2, out project,
@@ -113,19 +175,42 @@ namespace StoredTaskApp
             CreateCollection(out taskcollection, tasklist0, tasklist1, tasklist2, project);
             Debug.WriteLine("TaskCollection creation complete");
 
-            StoreDataAsync(taskcollection);
+            //StoreDataAsync(taskcollection);
         }
 
+        /// <summary>
+        /// Saves the TaskCollection object created into a binary file
+        /// </summary>
+        /// <param name="taskCollection"></param>
         private async void StoreDataAsync(TaskCollection taskCollection)
         {
             Debug.WriteLine("Saving the newly created TaskCollection Class to binary file");
             bool savedSuccessfully = await TaskCollectionSerializer.SaveAsync(taskCollection);
             Debug.WriteLine($"The call SaveTaskCollectionAsyn was successfull? {savedSuccessfully}");
-            TaskCollection savedTC = TaskCollectionSerializer.LoadAsync(taskCollection);
-
         }
 
-        private void CreateTasks(out Task task0, out Task task1, out Task task2, out Task task3)
+        /// <summary>
+        /// Loads the TaskCollection from stored binary file
+        /// </summary>
+        /// <returns></returns>
+        private async Task<StoredTaskApp.Model.TaskCollection> LoadTaskCollection()
+        {
+            TaskCollection taskCollectionLoaded = null;
+
+            taskCollectionLoaded = await TaskCollectionSerializer.LoadAsync();
+
+            return taskCollectionLoaded;
+        }
+
+        /// <summary>
+        /// This function will create Task objects
+        /// </summary>
+        /// <param name="task0"></param>
+        /// <param name="task1"></param>
+        /// <param name="task2"></param>
+        /// <param name="task3"></param>
+        private void CreateTasks(out StoredTaskApp.Model.Task task0, out StoredTaskApp.Model.Task task1, 
+                                 out StoredTaskApp.Model.Task task2, out StoredTaskApp.Model.Task task3)
         {
             Debug.WriteLine("");
             Debug.WriteLine("Test Task Class Functionality - Started");
@@ -161,6 +246,12 @@ namespace StoredTaskApp
 
         }
 
+        /// <summary>
+        /// This function will create 3 RepeatTask objects
+        /// </summary>
+        /// <param name="repeattask0"></param>
+        /// <param name="repeattask1"></param>
+        /// <param name="repeattask2"></param>
         private void CreateRepeatingTasks(out RepeatingTask repeattask0, out RepeatingTask repeattask1,
             out RepeatingTask repeattask2)
         {
@@ -191,8 +282,14 @@ namespace StoredTaskApp
             Debug.WriteLine("");
         }
 
-        private void CreateHabitTasks(out Habit habit0, out Habit habit1, out Habit habit2,
-            RepeatingTask repeatTask0, RepeatingTask repeatTask1, RepeatingTask repeatTask2)
+        /// <summary>
+        /// This function will create 3 Habit objects
+        /// </summary>
+        /// <param name="habit0"></param>
+        /// <param name="habit1"></param>
+        /// <param name="habit2"></param>
+
+        private void CreateHabitTasks(out Habit habit0, out Habit habit1, out Habit habit2)
         {
             Debug.WriteLine("");
             Debug.WriteLine("Test Habit Class Funtionality - Started");
@@ -215,14 +312,30 @@ namespace StoredTaskApp
             Log_Debug_Message(habit2);
             habit2.Change_Task_Status();
 
-
             Debug.WriteLine("");
             Debug.WriteLine("Test Habit Class Funtionality - Started");
             Debug.WriteLine("");
         }
 
+        /// <summary>
+        /// Creates 3 TaskList objects and uses the Task, RepeatingTask & Habit objects
+        /// </summary>
+        /// <param name="tasklist0"></param>
+        /// <param name="tasklist1"></param>
+        /// <param name="tasklist2"></param>
+        /// <param name="project"></param>
+        /// <param name="task0"></param>
+        /// <param name="task1"></param>
+        /// <param name="task2"></param>
+        /// <param name="task3"></param>
+        /// <param name="repeatingTask0"></param>
+        /// <param name="repeatingTask1"></param>
+        /// <param name="repeatingTask2"></param>
+        /// <param name="habit0"></param>
+        /// <param name="habit1"></param>
+        /// <param name="habit2"></param>
         private void CreateTaskLists(out TaskList tasklist0, out TaskList tasklist1, out TaskList tasklist2, out Project project,
-            Task task0, Task task1, Task task2, Task task3,
+            StoredTaskApp.Model.Task task0, StoredTaskApp.Model.Task task1, StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3,
             RepeatingTask repeatingTask0, RepeatingTask repeatingTask1, RepeatingTask repeatingTask2,
             Habit habit0, Habit habit1, Habit habit2)
         {
@@ -237,6 +350,14 @@ namespace StoredTaskApp
             project = CreateProjectTaskList(habit0, repeatingTask0, task0, task1, task2, task3);
         }
 
+        /// <summary>
+        /// Create a TaskCollection object that has 3 TaskList and 1 project object 
+        /// </summary>
+        /// <param name="taskCollection"></param>
+        /// <param name="taskList0"></param>
+        /// <param name="taskList1"></param>
+        /// <param name="taskList2"></param>
+        /// <param name="project"></param>
         private void CreateCollection(out TaskCollection taskCollection, TaskList taskList0,
             TaskList taskList1, TaskList taskList2, Project project)
         {
@@ -265,7 +386,17 @@ namespace StoredTaskApp
             Log_Debug_Message(taskCollection);
         }
 
-        private TaskList CreateTaskList0(Task task0, Task task1, Task task2, Task task3, RepeatingTask repeatTask)
+        /// <summary>
+        /// Creates the first TaskList object
+        /// </summary>
+        /// <param name="task0"></param>
+        /// <param name="task1"></param>
+        /// <param name="task2"></param>
+        /// <param name="task3"></param>
+        /// <param name="repeatTask"></param>
+        /// <returns>TaskList</returns>
+        private TaskList CreateTaskList0(StoredTaskApp.Model.Task task0, StoredTaskApp.Model.Task task1, 
+                                         StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3, RepeatingTask repeatTask)
         {
             string errorMsg = "";
             TaskList tasklist;
@@ -308,7 +439,16 @@ namespace StoredTaskApp
             return tasklist;
         }
 
-        private TaskList CreateTaskList1(Task task2, Task task3, Habit habit, RepeatingTask repeatingTask)
+        /// <summary>
+        /// Creates the second TaskList object
+        /// </summary>
+        /// <param name="task2"></param>
+        /// <param name="task3"></param>
+        /// <param name="habit"></param>
+        /// <param name="repeatingTask"></param>
+        /// <returns>TaskList</returns>
+        private TaskList CreateTaskList1(StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3, 
+                                         Habit habit, RepeatingTask repeatingTask)
         {
             string errorMsg;
             TaskList tasklist;
@@ -340,7 +480,13 @@ namespace StoredTaskApp
 
         }
 
-        private TaskList CreateTaskList2(Task task0, Task task3)
+        /// <summary>
+        /// Creates the third TaskList object
+        /// </summary>
+        /// <param name="task0"></param>
+        /// <param name="task3"></param>
+        /// <returns>TaskList</returns>
+        private TaskList CreateTaskList2(StoredTaskApp.Model.Task task0, StoredTaskApp.Model.Task task3)
         {
             string errorMsg;
             TaskList tasklist;
@@ -369,8 +515,19 @@ namespace StoredTaskApp
 
         }
 
+        /// <summary>
+        /// Creates the Project object
+        /// </summary>
+        /// <param name="habit0"></param>
+        /// <param name="repeatingTask0"></param>
+        /// <param name="task0"></param>
+        /// <param name="task1"></param>
+        /// <param name="task2"></param>
+        /// <param name="task3"></param>
+        /// <returns>Project</returns>
         private Project CreateProjectTaskList(Habit habit0, RepeatingTask repeatingTask0,
-            Task task0, Task task1, Task task2, Task task3)
+                                              StoredTaskApp.Model.Task task0, StoredTaskApp.Model.Task task1, 
+                                              StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3)
         {
             string errorMsg;
             Project project;
@@ -389,6 +546,7 @@ namespace StoredTaskApp
 
             Debug.WriteLine("Add Task 1 to Project (Pre-Construction Phase)");
             errorMsg = $"Failed to add a Task - {task0.Description}";
+            task0.Change_Task_Status();
             project = AddTaskToList(project, task0, errorMsg);
 
             Debug.WriteLine("Add Task 2 to Project (Pre-Construction Phase)");
@@ -410,13 +568,26 @@ namespace StoredTaskApp
             return project;
         }
 
-        private Task Add_New_Task(string description, string notes)
+        /// <summary>
+        /// This function takes two inputs and returns a new Task object
+        /// </summary>
+        /// <param name="description"></param>
+        /// <param name="notes"></param>
+        /// <returns>Task</returns>
+        private StoredTaskApp.Model.Task Add_New_Task(string description, string notes)
         {
-            Task myTask = new Task(description, notes);
+            StoredTaskApp.Model.Task myTask = new StoredTaskApp.Model.Task(description, notes);
             Log_Debug_Message(myTask);
             return myTask;
         }
 
+        /// <summary>
+        /// This function takes three inputs and creates a new RepeatingTask object
+        /// </summary>
+        /// <param name="description"></param>
+        /// <param name="notes"></param>
+        /// <param name="repeatCycle"></param>
+        /// <returns>RepeatingTask</returns>
         private RepeatingTask Add_New_Task(string description, string notes, RepeatCycle repeatCycle)
         {
             RepeatingTask myTask = new RepeatingTask(description, notes, repeatCycle);
@@ -424,6 +595,11 @@ namespace StoredTaskApp
             return myTask;
         }
 
+        /// <summary>
+        /// This function takes one input and creates a new TaskList
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns>TaskList</returns>
         private TaskList Add_New_Task_List(string name)
         {
             TaskList myTaskList = new TaskList(name);
@@ -431,6 +607,11 @@ namespace StoredTaskApp
             return myTaskList;
         }
 
+        /// <summary>
+        /// This function takes one input and creates a new Project object
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns>Project</returns>
         private Project Add_New_Project(string name)
         {
             Project myProject = new Project(name);
@@ -438,7 +619,14 @@ namespace StoredTaskApp
             return myProject;
         }
 
-        private TaskList AddTaskToList(TaskList taskList, Task task, string errorMsg)
+        /// <summary>
+        /// This function adds a Task object to a TaskList object
+        /// </summary>
+        /// <param name="taskList"></param>
+        /// <param name="task"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns>TaskList</returns>
+        private TaskList AddTaskToList(TaskList taskList, StoredTaskApp.Model.Task task, string errorMsg)
         {
             if (taskList.Add_Task_To_List(task))
             {
@@ -451,6 +639,13 @@ namespace StoredTaskApp
             return taskList;
         }
 
+        /// <summary>
+        /// This function adds a Habit object to a TaskList object
+        /// </summary>
+        /// <param name="taskList"></param>
+        /// <param name="habit"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns>TaskList</returns>
         private TaskList AddTaskToList(TaskList taskList, Habit habit, string errorMsg)
         {
             if (taskList.Add_Task_To_List(habit))
@@ -464,6 +659,13 @@ namespace StoredTaskApp
             return taskList;
         }
 
+        /// <summary>
+        /// This function add a RepeatingTask object to a TaskList object
+        /// </summary>
+        /// <param name="taskList"></param>
+        /// <param name="repeatTask"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns>TaskList</returns>
         private TaskList AddTaskToList(TaskList taskList, RepeatingTask repeatTask, string errorMsg)
         {
             if (taskList.Add_Task_To_List(repeatTask))
@@ -477,7 +679,14 @@ namespace StoredTaskApp
             return taskList;
         }
 
-        private Project AddTaskToList(Project project, Task task, string errorMsg)
+        /// <summary>
+        /// This function adds a Task object to a Project object
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="task"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns>Project</returns>
+        private Project AddTaskToList(Project project, StoredTaskApp.Model.Task task, string errorMsg)
         {
             if (project.Add_Task_To_List(task))
             {
@@ -490,6 +699,14 @@ namespace StoredTaskApp
             return project;
         }
 
+        /// <summary>
+        /// This function add a Habit task to a Project object
+        /// (This is not possible, as Project can only store a Task object)
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="habit"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns>Project</returns>
         private Project AddTaskToList(Project project, Habit habit, string errorMsg)
         {
             if (project.Add_Task_To_List(habit))
@@ -503,6 +720,14 @@ namespace StoredTaskApp
             return project;
         }
 
+        /// <summary>
+        /// This function add a Habit task to a Project object
+        /// (This is not possible, as Project can only store a Task object)
+        /// </summary>
+        /// <param name="project"></param>
+        /// <param name="repeatTask"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns>Project</returns>
         private Project AddTaskToList(Project project, RepeatingTask repeatTask, string errorMsg)
         {
             if (project.Add_Task_To_List(repeatTask))
@@ -516,13 +741,21 @@ namespace StoredTaskApp
             return project;
         }
 
-        private void Log_Debug_Message(Task task)
+        /// <summary>
+        /// This function displays the Task object data
+        /// </summary>
+        /// <param name="task"></param>
+        private void Log_Debug_Message(StoredTaskApp.Model.Task task)
         {
             Debug.WriteLine("Task object");
             Debug.WriteLine($"Description: '{task.Description}', Notes: '{task.Notes}', Task Priority: {task.Task_Priority.Display_Priority()}, Task Status: {task.Task_Status}, Task Creation Date: {task.Task_Creation_Date}");
             Debug.WriteLine("");
         }
 
+        /// <summary>
+        /// This function displays the RepeatingTask object data
+        /// </summary>
+        /// <param name="repeatingTask"></param>
         private void Log_Debug_Message(RepeatingTask repeatingTask)
         {
             Debug.WriteLine("RepeatingTask object");
@@ -531,6 +764,10 @@ namespace StoredTaskApp
 
         }
 
+        /// <summary>
+        /// This function displays the Habit object data
+        /// </summary>
+        /// <param name="habit"></param>
         private void Log_Debug_Message(Habit habit)
         {
             Debug.WriteLine("Habit object");
@@ -538,22 +775,121 @@ namespace StoredTaskApp
             Debug.WriteLine("");
         }
 
+        /// <summary>
+        /// This function displays the TaskList object data
+        /// </summary>
+        /// <param name="taskList"></param>
         private void Log_Debug_Message(TaskList taskList)
         {
             Debug.WriteLine($"Name of my list: '{taskList.Name}', List count: {taskList.Count}, Incomplete task count: {taskList.Count_Of_Incomplete_Tasks}");
             Debug.WriteLine("");
         }
 
+        /// <summary>
+        /// This functions displays the Project object data
+        /// </summary>
+        /// <param name="project"></param>
         private void Log_Debug_Message(Project project)
         {
-            Debug.WriteLine($"Project List - All Task Count: {project.Count}, Incomplete Task Count: {project.Count_Of_Incomplete_Tasks}, Project Completion %: {project.CompletionPercentage}");
+            Debug.WriteLine($"Project Name: '{project.Name}' - All Task Count: {project.Count}, Incomplete Task Count: {project.Count_Of_Incomplete_Tasks}, Project Completion %: {project.CompletionPercentage}");
             Debug.WriteLine("");
         }
 
+        /// <summary>
+        /// This function displays the TaskCollection object data
+        /// </summary>
+        /// <param name="taskCollection"></param>
         private void Log_Debug_Message(TaskCollection taskCollection)
         {
             Debug.WriteLine($"Task Collection - All Task Count: {taskCollection.Count}, Incomplete Task Count: {taskCollection.Count_Of_Incomplete_Tasks}");
             Debug.WriteLine("");
+        }
+
+        /// <summary>
+        /// This function displays all the data of the TaskCollection object
+        /// </summary>
+        /// <param name="taskCollection"></param>
+        private void DisplayTaskCollection(TaskCollection taskCollection)
+        {
+            Log_Debug_Message(taskCollection);
+            foreach (var tasklist in taskCollection.TaskLists)
+            {
+                switch (tasklist.GetType().ToString())
+                {
+                    case "StoredTaskApp.Model.TaskList":
+                        {
+                            StoredTaskApp.Model.TaskList tempTaskList = (StoredTaskApp.Model.TaskList)tasklist;
+                            DisplayAllTasks(tasklist);
+                            break;
+                        }
+                    case "StoredTaskApp.Model.Project":
+                        {
+                            StoredTaskApp.Model.Project tempTaskLiist = (StoredTaskApp.Model.Project)tasklist;
+                            DisplayAllTasks((Project)tasklist);
+                            break;
+                        }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Displays all the Tasks / RepeatingTasks / Habits in a TaskList object
+        /// </summary>
+        /// <param name="tasklist"></param>
+        private void DisplayAllTasks(TaskList tasklist)
+        {
+            Log_Debug_Message(tasklist);
+            foreach (var taskItem in tasklist.ReturnTasks)
+            {
+                switch (taskItem.GetType().ToString())
+                {
+                    case "StoredTaskApp.Model.Task":
+                        {
+                            Log_Debug_Message((StoredTaskApp.Model.Task)taskItem);
+                            break;
+                        }
+                    case "StoredTaskApp.Model.Habit":
+                        {
+                            Log_Debug_Message((StoredTaskApp.Model.Habit)taskItem);
+                            break;
+                        }
+                    case "StoredTaskApp.Model.RepeatingTask":
+                        {
+                            Log_Debug_Message((StoredTaskApp.Model.RepeatingTask)taskItem);
+                            break;
+                        }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Displays all the Tasks / RepeatingTasks / Habits in a Project object
+        /// </summary>
+        /// <param name="tasklist"></param>
+        private void DisplayAllTasks(Project project)
+        {
+            Log_Debug_Message(project);
+            foreach (var taskItem in project.ReturnTasks)
+            {
+                switch (taskItem.GetType().ToString())
+                {
+                    case "StoredTaskApp.Model.Task":
+                        {
+                            Log_Debug_Message((StoredTaskApp.Model.Task)taskItem);
+                            break;
+                        }
+                    case "StoredTaskApp.Model.Habit":
+                        {
+                            Log_Debug_Message((StoredTaskApp.Model.Habit)taskItem);
+                            break;
+                        }
+                    case "StoredTaskApp.Model.RepeatingTask":
+                        {
+                            Log_Debug_Message((StoredTaskApp.Model.RepeatingTask)taskItem);
+                            break;
+                        }
+                }
+            }
         }
 
     }

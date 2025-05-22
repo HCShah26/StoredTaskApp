@@ -46,7 +46,7 @@ namespace StoredTaskApp.Model
             _notes = notes;
             _task_status= task_status;
             _task_priority= task_priority;
-            _task_completion_date = task_creation_date;
+            _task_creation_date = task_creation_date;
             _task_completion_date = task_completion_date;
         }
 
@@ -159,6 +159,10 @@ namespace StoredTaskApp.Model
         public virtual void Change_Task_Status()
         {
             _task_status = !_task_status; //Toggle boolean value
+            if (_task_status == true)
+            {
+                _task_completion_date = DateTime.Now;
+            }
         }
 
     }

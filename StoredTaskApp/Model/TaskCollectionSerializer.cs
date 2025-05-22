@@ -17,6 +17,25 @@ namespace StoredTaskApp.Model
     public static class TaskCollectionSerializer
     {
         private const string Filename = "myFile.bin";
+        private const bool debugFlag = false; //Change this flag True displays log, False does not display log
+        public static async Task<bool> DoesFileExist()
+        {
+            StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
+
+            bool fileExists = false;
+
+            try
+            {
+                StorageFile file = await storageFolder.GetFileAsync(Filename);
+                fileExists = true;
+            }
+            catch (FileNotFoundException)
+            {
+                fileExists = false;
+            }
+
+            return fileExists;
+        }
 
         public static async Task<bool> SaveAsync(TaskCollection taskCollection)
         {
@@ -25,124 +44,122 @@ namespace StoredTaskApp.Model
             {
                 StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
                 StorageFile file = await storageFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
-                Debug.WriteLine($"File location: {storageFolder.Path}");
+                Debug.WriteLineIf(debugFlag, $"File location: {storageFolder.Path}");
 
                 using (var stream = System.IO.File.Open(file.Path, FileMode.Create))
                 {
                     using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
                     {
                         writer.Write(taskCollection.TaskLists.Count); // First item stored in the binary file is the count of lists stored in the TaskCollection class
-                        Debug.WriteLine($"This collection has {taskCollection.TaskLists.Count} lists");
+                        Debug.WriteLineIf(debugFlag, $"This collection has {taskCollection.TaskLists.Count} lists");
                         foreach (var taskList in taskCollection.TaskLists)
                         {
                             writer.Write(taskList.GetType().ToString());
                             writer.Write(taskList.Count);
                             writer.Write(taskList.Name);
 
-                            Debug.WriteLine($"Tasklist type is '{taskList.GetType().ToString()}'");
-                            Debug.WriteLine($"TaskList count is {taskList.Count}");
-                            Debug.WriteLine($"TaskList Name is {taskList.Name}");
+                            Debug.WriteLineIf(debugFlag, $"Tasklist type is '{taskList.GetType().ToString()}'");
+                            Debug.WriteLineIf(debugFlag, $"TaskList count is {taskList.Count}");
+                            Debug.WriteLineIf(debugFlag,$"TaskList Name is {taskList.Name}");
 
                             foreach (var taskitem in (List<Task>)taskList.ReturnTasks)
                             {
                                 writer.Write(taskitem.GetType().ToString());
-                                Debug.WriteLine($"  Task type is '{taskitem.GetType().ToString()}'");
+                                Debug.WriteLineIf(debugFlag, $"  Task type is '{taskitem.GetType().ToString()}'");
                                 switch (taskitem.GetType().ToString())
                                 {
                                     case "StoredTaskApp.Model.Task":
+                                    {
+                                        StoredTaskApp.Model.Task currentTask = (StoredTaskApp.Model.Task)taskitem;
+                                        writer.Write(currentTask.Description);
+                                        writer.Write(currentTask.Notes);
+                                        writer.Write(currentTask.Task_Status);
+                                        writer.Write(currentTask.Task_Priority.Value);
+                                        writer.Write(currentTask.Task_Creation_Date.Ticks);
+                                        writer.Write(currentTask.Task_Completion_Date.HasValue);
+                                        if (currentTask.Task_Completion_Date.HasValue)
                                         {
-                                            StoredTaskApp.Model.Task currentTask = (StoredTaskApp.Model.Task)taskitem;
-                                            writer.Write(currentTask.Description);
-                                            writer.Write(currentTask.Notes);
-                                            writer.Write(currentTask.Task_Status);
-                                            writer.Write(currentTask.Task_Priority.Value);
-                                            writer.Write(currentTask.Task_Creation_Date.Ticks);
-                                            writer.Write(currentTask.Task_Completion_Date.HasValue);
-                                            if (currentTask.Task_Completion_Date.HasValue)
-                                            {
-                                                writer.Write(currentTask.Task_Completion_Date.Value.Ticks);
-                                            }
-
-                                            Debug.WriteLine($"Task");
-                                            Debug.WriteLine($"      Task Data Information Description -     {currentTask.Description}");
-                                            Debug.WriteLine($"      Task Data Information Notes -           {currentTask.Notes}");
-                                            Debug.WriteLine($"      Task Data Information Status -          {currentTask.Task_Status}");
-                                            Debug.WriteLine($"      Task Data Information Priority -        {currentTask.Task_Priority.Value}");
-                                            Debug.WriteLine($"      Task Data Information Creation Date -   {currentTask.Task_Creation_Date}");
-                                            Debug.WriteLine($"      Task Data Information Completion Date - {currentTask.Task_Completion_Date}");
-                                            //SavedSuccessFully = SaveTask(taskitem, writer);
-                                            break;
+                                            writer.Write(currentTask.Task_Completion_Date.Value.Ticks);
                                         }
+
+                                        Debug.WriteLineIf(debugFlag, $"Task");
+                                        Debug.WriteLineIf(debugFlag, $"      Task Data Information Description -     {currentTask.Description}");
+                                        Debug.WriteLineIf(debugFlag, $"      Task Data Information Notes -           {currentTask.Notes}");
+                                        Debug.WriteLineIf(debugFlag, $"      Task Data Information Status -          {currentTask.Task_Status}");
+                                        Debug.WriteLineIf(debugFlag, $"      Task Data Information Priority -        {currentTask.Task_Priority.Value}");
+                                        Debug.WriteLineIf(debugFlag, $"      Task Data Information Creation Date -   {currentTask.Task_Creation_Date}");
+                                        Debug.WriteLineIf(debugFlag, $"      Task Data Information Completion Date - {currentTask.Task_Completion_Date}");
+                                        break;
+                                    }
                                     case "StoredTaskApp.Model.RepeatingTask":
+                                    {
+                                        StoredTaskApp.Model.RepeatingTask currentTask = (StoredTaskApp.Model.RepeatingTask)taskitem;
+                                        writer.Write(currentTask.Description);
+                                        writer.Write(currentTask.Notes);
+                                        writer.Write(currentTask.Task_Status);
+                                        writer.Write(currentTask.Task_Priority.Value);
+                                        writer.Write(currentTask.Task_Creation_Date.Ticks);
+                                        writer.Write(currentTask.Task_Completion_Date.HasValue);
+                                        if (currentTask.Task_Completion_Date.HasValue)
                                         {
-                                            StoredTaskApp.Model.RepeatingTask currentTask = (StoredTaskApp.Model.RepeatingTask)taskitem;
-                                            writer.Write(currentTask.Description);
-                                            writer.Write(currentTask.Notes);
-                                            writer.Write(currentTask.Task_Status);
-                                            writer.Write(currentTask.Task_Priority.Value);
-                                            writer.Write(currentTask.Task_Creation_Date.Ticks);
-                                            writer.Write(currentTask.Task_Completion_Date.HasValue);
-                                            if (currentTask.Task_Completion_Date.HasValue)
-                                            {
-                                                writer.Write(currentTask.Task_Completion_Date.Value.Ticks);
-                                            }
-                                            writer.Write((int)currentTask.RepeatCyclePeriod);
-
-                                            Debug.WriteLine($"RepeatingTask");
-                                            Debug.WriteLine($"      Repeating Task Data Information Description -       {currentTask.Description}");
-                                            Debug.WriteLine($"      Repeating Task Data Information Notes -             {currentTask.Notes}");
-                                            Debug.WriteLine($"      Repeating Task Data Information Status -            {currentTask.Task_Status}");
-                                            Debug.WriteLine($"      Repeating Task Data Information Priority -          {currentTask.Task_Priority.Value}");
-                                            Debug.WriteLine($"      Repeating Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
-                                            Debug.WriteLine($"      Repeating Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
-                                            Debug.WriteLine($"      Repeating Task Data Information Repeat Cycle -      {(int)currentTask.RepeatCyclePeriod}");
-                                            //SavedSuccessFully = SaveRepeatingTask((RepeatingTask)taskitem, writer);
-                                            break;
+                                            writer.Write(currentTask.Task_Completion_Date.Value.Ticks);
                                         }
+                                        writer.Write((int)currentTask.RepeatCyclePeriod);
+
+                                        Debug.WriteLineIf(debugFlag, $"RepeatingTask");
+                                        Debug.WriteLineIf(debugFlag, $"      Repeating Task Data Information Description -       {currentTask.Description}");
+                                        Debug.WriteLineIf(debugFlag, $"      Repeating Task Data Information Notes -             {currentTask.Notes}");
+                                        Debug.WriteLineIf(debugFlag, $"      Repeating Task Data Information Status -            {currentTask.Task_Status}");
+                                        Debug.WriteLineIf(debugFlag, $"      Repeating Task Data Information Priority -          {currentTask.Task_Priority.Value}");
+                                        Debug.WriteLineIf(debugFlag, $"      Repeating Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
+                                        Debug.WriteLineIf(debugFlag, $"      Repeating Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
+                                        Debug.WriteLineIf(debugFlag, $"      Repeating Task Data Information Repeat Cycle -      {(int)currentTask.RepeatCyclePeriod}");
+                                        break;
+                                    }
                                     case "StoredTaskApp.Model.Habit":
+                                    {
+                                        StoredTaskApp.Model.Habit currentTask = (StoredTaskApp.Model.Habit)taskitem;
+                                        writer.Write(currentTask.Description);
+                                        writer.Write(currentTask.Notes);
+                                        writer.Write(currentTask.Task_Status);
+                                        writer.Write(currentTask.Task_Priority.Value);
+                                        writer.Write(currentTask.Task_Creation_Date.Ticks);
+                                        writer.Write(currentTask.Task_Completion_Date.HasValue);
+                                        if (currentTask.Task_Completion_Date.HasValue)
                                         {
-                                            StoredTaskApp.Model.Habit currentTask = (StoredTaskApp.Model.Habit)taskitem;
-                                            writer.Write(currentTask.Description);
-                                            writer.Write(currentTask.Notes);
-                                            writer.Write(currentTask.Task_Status);
-                                            writer.Write(currentTask.Task_Priority.Value);
-                                            writer.Write(currentTask.Task_Creation_Date.Ticks);
-                                            writer.Write(currentTask.Task_Completion_Date.HasValue);
-                                            if (currentTask.Task_Completion_Date.HasValue)
-                                            {
-                                                writer.Write(currentTask.Task_Completion_Date.Value.Ticks); // Converting Task_Completion_Date to long
-                                            }
-                                            writer.Write((int)currentTask.RepeatCyclePeriod);
-                                            writer.Write(currentTask.StreakCount);
-                                            if (currentTask.LastCompletionDate == null)
-                                            {
-                                                writer.Write(false); //This is equivalent to LastCompletionDate.HasValue
-                                            }
-                                            else
-                                            {
-                                                writer.Write(true); //This is equivalent to LastCompletionDate.HasValue
-                                                                    //Converting the returned string value (LastCompletionDate) to date and storing as long in binary
-                                                DateTime dtTemp = DateTime.Parse(currentTask.LastCompletionDate);
-                                                writer.Write(dtTemp.Ticks);
-                                            }
-
-                                            Debug.WriteLine($"Habit");
-                                            Debug.WriteLine($"      Habit Task Data Information Description -       {currentTask.Description}");
-                                            Debug.WriteLine($"      Habit Task Data Information Notes -             {currentTask.Notes}");
-                                            Debug.WriteLine($"      Habit Task Data Information Status -            {currentTask.Task_Status}");
-                                            Debug.WriteLine($"      Habit Task Data Information Priority -          {currentTask.Task_Priority.Value}");
-                                            Debug.WriteLine($"      Habit Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
-                                            Debug.WriteLine($"      Habit Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
-                                            Debug.WriteLine($"      Habit Task Date Information Repeat Cycle -      {(int)currentTask.RepeatCyclePeriod}");
-                                            Debug.WriteLine($"      Habit Task Data Information Streak Count -      {currentTask.StreakCount}");
-                                            Debug.WriteLine($"      Habit Task Data Information Last Comp. Date-    {currentTask.LastCompletionDate}");
-                                            //SavedSuccessFully = SaveHabit((Habit)taskitem, writer);
-                                            break;
+                                            writer.Write(currentTask.Task_Completion_Date.Value.Ticks); // Converting Task_Completion_Date to long
                                         }
+                                        writer.Write((int)currentTask.RepeatCyclePeriod);
+                                        writer.Write(currentTask.StreakCount);
+                                        if (currentTask.LastCompletionDate == null)
+                                        {
+                                            writer.Write(false); //This is equivalent to LastCompletionDate.HasValue
+                                        }
+                                        else
+                                        {
+                                            writer.Write(true); //This is equivalent to LastCompletionDate.HasValue
+                                                                //Converting the returned string value (LastCompletionDate) to date and storing as long in binary
+                                            DateTime dtTemp = DateTime.Parse(currentTask.LastCompletionDate);
+                                            writer.Write(dtTemp.Ticks);
+                                        }
+
+                                        Debug.WriteLineIf(debugFlag, $"Habit");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Description -       {currentTask.Description}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Notes -             {currentTask.Notes}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Status -            {currentTask.Task_Status}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Priority -          {currentTask.Task_Priority.Value}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Date Information Repeat Cycle -      {(int)currentTask.RepeatCyclePeriod}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Streak Count -      {currentTask.StreakCount}");
+                                        Debug.WriteLineIf(debugFlag, $"      Habit Task Data Information Last Comp. Date-    {currentTask.LastCompletionDate}");
+                                        break;
+                                    }
                                 }
                             }
                         }
                         writer.Dispose();
+                        SavedSuccessFully = true;
                     }
                 }
                 return true; // Saved successfully
@@ -154,14 +171,14 @@ namespace StoredTaskApp.Model
             }
         }
 
-        public static TaskCollection LoadAsync(TaskCollection taskCollection) //The input TaskCollection is only temporary measure whilst the Load Method is built!!!
+        public static async Task<TaskCollection> LoadAsync() //The input TaskCollection is only temporary measure whilst the Load Method is built!!!
         {
             try
             {
-                Debug.WriteLine("Attempting to read myFile.bin");
+                Debug.WriteLineIf(debugFlag, "Attempting to read myFile.bin");
                 StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
 
-                Debug.WriteLine($"Folder location to read the file: {storageFolder.Path}\\{Filename}");
+                Debug.WriteLineIf(debugFlag, $"Folder location to read the file: {storageFolder.Path}\\{Filename}");
 
                 string taskType;
                 string task_desc;
@@ -176,13 +193,11 @@ namespace StoredTaskApp.Model
                 bool lastcompletion_has_value;
                 DateTime lastCompletionDate;
 
-                StoredTaskApp.Model.TaskCollection savedTaskCollection;
-                StoredTaskApp.Model.TaskList taskList;
-                StoredTaskApp.Model.Project project;
-                
+                StoredTaskApp.Model.TaskCollection savedTaskCollection = null;
+
                 using (var stream = System.IO.File.Open(storageFolder.Path + "\\" + Filename, FileMode.Open))
                 {
-                    Debug.WriteLine($"The content of stream: {stream.Length}");
+                    Debug.WriteLineIf(debugFlag, $"The content of stream: {stream.Length}");
 
                     using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
                     { 
@@ -193,25 +208,32 @@ namespace StoredTaskApp.Model
 
                         for (int tc_count = 0; tc_count < taskCollection_count; tc_count++)
                         {
+                            StoredTaskApp.Model.TaskList taskList = null;
+                            StoredTaskApp.Model.Project project = null;
+
+                            StoredTaskApp.Model.Task tempTask;
+                            StoredTaskApp.Model.RepeatingTask tempRepeatingTask = null;
+                            StoredTaskApp.Model.Habit tempHabit = null;
+
                             string tList_Type = reader.ReadString(); //Stores the Type of TaskList (TaskList or Project)
                             int tasklist_count = reader.ReadInt32(); //Stores the number of different tasks there are in this tasklist or project
                             string tlist_Name = reader.ReadString(); //Store the name of this Tasklist or Project;
 
-                            Debug.WriteLine($"Tasklist Type: {tList_Type}");
-                            Debug.WriteLine($"The Task Collection has {taskCollection_count} Task Lists");
-                            Debug.WriteLine($"This TaskList name: {tlist_Name}");
+                            Debug.WriteLineIf(debugFlag, $"Tasklist Type: {tList_Type}");
+                            Debug.WriteLineIf(debugFlag, $"The Task Collection has {taskCollection_count} Task Lists");
+                            Debug.WriteLineIf(debugFlag, $"This TaskList name: {tlist_Name}");
 
                             if (tList_Type == "StoredTaskApp.Model.TaskList")
                             {
                                 StoredTaskApp.Model.TaskList currentTaskList = new TaskList(tlist_Name);
                                 taskList = currentTaskList;
                             }
-                            else if (tList_Type == "StoredTaskApp.Model.Project") 
+                            else if (tList_Type == "StoredTaskApp.Model.Project")
                             {
                                 StoredTaskApp.Model.Project currentTaskList = new Project(tlist_Name);
                                 project = currentTaskList;
                             }
-                            else 
+                            else
                             {
                                 //Error has occured!!!
                             }
@@ -219,9 +241,7 @@ namespace StoredTaskApp.Model
 
                             for (int tlist_count = 0; tlist_count < tasklist_count; tlist_count++)
                             {
-                                StoredTaskApp.Model.Task tempTask;
-                                StoredTaskApp.Model.RepeatingTask tempRepeatingTask;
-                                StoredTaskApp.Model.Habit tempHabit;
+
 
                                 taskType = reader.ReadString();
                                 task_desc = reader.ReadString(); // writer.Write(currentTask.Description);
@@ -310,112 +330,44 @@ namespace StoredTaskApp.Model
                                     }
                                 }
 
-                                    Debug.WriteLine("Task object created");
-                                Debug.WriteLine($"Task Description      : {tempTask.Description}");
-                                Debug.WriteLine($"Task Notes            : {tempTask.Notes}");
-                                Debug.WriteLine($"Task Status           : {tempTask.Task_Status}");
-                                Debug.WriteLine($"Task Priority         : {tempTask.Task_Priority}");
-                                Debug.WriteLine($"Task Creation Date    : {tempTask.Task_Creation_Date}");
-                                Debug.WriteLine($"Task Completion Date  : {tempTask.Task_Completion_Date}");
+                                Debug.WriteLineIf(debugFlag, "Task object created");
+                                Debug.WriteLineIf(debugFlag, $"Task Description      : {tempTask.Description}");
+                                Debug.WriteLineIf(debugFlag, $"Task Notes            : {tempTask.Notes}");
+                                Debug.WriteLineIf(debugFlag, $"Task Status           : {tempTask.Task_Status}");
+                                Debug.WriteLineIf(debugFlag, $"Task Priority         : {tempTask.Task_Priority}");
+                                Debug.WriteLineIf(debugFlag, $"Task Creation Date    : {tempTask.Task_Creation_Date}");
+                                Debug.WriteLineIf(debugFlag, $"Task Completion Date  : {tempTask.Task_Completion_Date}");
                                 if ( taskType == "StoredTaskApp.Model.RepeatingTask")
                                 {
-                                    Debug.WriteLine($"Task Repeat Cycle     : {tempRepeatingTask.RepeatCyclePeriod}");
+                                    Debug.WriteLineIf(debugFlag, $"Task Repeat Cycle     : {tempRepeatingTask.RepeatCyclePeriod}");
                                 }
                                 else if ( taskType == "StoredTaskApp.Model.Habit")
                                 {
-                                    Debug.WriteLine($"Task Repeat Cycle     : {tempHabit.RepeatCyclePeriod}");
-                                    Debug.WriteLine($"Task Streak Count     : {tempHabit.StreakCount}");
-                                    Debug.WriteLine($"Task Last Completion  : {tempHabit.LastCompletionDate}");
+                                    Debug.WriteLineIf(debugFlag, $"Task Repeat Cycle     : {tempHabit.RepeatCyclePeriod}");
+                                    Debug.WriteLineIf(debugFlag, $"Task Streak Count     : {tempHabit.StreakCount}");
+                                    Debug.WriteLineIf(debugFlag, $"Task Last Completion  : {tempHabit.LastCompletionDate}");
                                 }
+                            }
+                            // Add currentTaskList to savedTaskCollection
+                            if (project != null)
+                            {
+                                savedTaskCollection.Add_TaskListToCollection(project);
+                            }
+
+                            if (taskList != null)
+                            {
+                                savedTaskCollection.Add_TaskListToCollection(taskList);
                             }
                         }
                     }
                 }
-                return taskCollection;
+                return savedTaskCollection;
             }
             catch (Exception e)
             {
                 Debug.WriteLine("An error occured trying to read myFile.bin");
                 Debug.WriteLine(e.Message);
                 return null;
-            }
-        }
-
-        private static bool SaveTask(StoredTaskApp.Model.Task currentTask, BinaryWriter writer)
-        {
-            try
-            {
-                using (writer)
-                {
-                    Debug.WriteLine($"Task");
-                    Debug.WriteLine($"      Task Data Information Description -     {currentTask.Description}");
-                    Debug.WriteLine($"      Task Data Information Notes -           {currentTask.Notes}");
-                    Debug.WriteLine($"      Task Data Information Status -          {currentTask.Task_Status}");
-                    Debug.WriteLine($"      Task Data Information Priority -        {currentTask.Task_Priority}");
-                    Debug.WriteLine($"      Task Data Information Creation Date -   {currentTask.Task_Creation_Date}");
-                    Debug.WriteLine($"      Task Data Information Completion Date - {currentTask.Task_Completion_Date}");
-
-                    
-                }
-                return true; //Successfully saved Task 
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message);
-                return false; // Failed to successfully save Task
-            }
-        }
-
-        private static bool SaveRepeatingTask(RepeatingTask currentTask, BinaryWriter writer)
-        {
-            try
-            {
-                using (writer)
-                {
-                    Debug.WriteLine($"RepeatingTask");
-                    Debug.WriteLine($"      Repeating Task Data Information Description -       {currentTask.Description}");
-                    Debug.WriteLine($"      Repeating Task Data Information Notes -             {currentTask.Notes}");
-                    Debug.WriteLine($"      Repeating Task Data Information Status -            {currentTask.Task_Status}");
-                    Debug.WriteLine($"      Repeating Task Data Information Priority -          {currentTask.Task_Priority}");
-                    Debug.WriteLine($"      Repeating Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
-                    Debug.WriteLine($"      Repeating Task Data Information Completion Date -   {currentTask.Task_Completion_Date}");
-
-                    
-                }
-                return true; //Successfully saved RepeatingTask
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message);
-                return false; // Failed to successfully save RepeatingTask
-            }
-        }
-
-        private static bool SaveHabit(Habit currentTask, BinaryWriter writer)
-        {
-            try
-            {
-                using (writer)
-                {
-                    Debug.WriteLine($"Habit");
-                    Debug.WriteLine($"      Habit Task Data Information Description -       {currentTask.Description}");
-                    Debug.WriteLine($"      Habit Task Data Information Notes -             {currentTask.Notes}");
-                    Debug.WriteLine($"      Habit Task Data Information Status -            {currentTask.Task_Status}");
-                    Debug.WriteLine($"      Habit Task Data Information Priority -          {currentTask.Task_Priority}");
-                    Debug.WriteLine($"      Habit Task Data Information Creation Date -     {currentTask.Task_Creation_Date}");
-                    Debug.WriteLine($"      Habit Task Data Information Completion Date-    {currentTask.Task_Completion_Date}");
-                    Debug.WriteLine($"      Habit Task Data Information Streak Count -      {currentTask.StreakCount}");
-                    Debug.WriteLine($"      Habit Task Data Information Last Comp. Date-    {currentTask.LastCompletionDate}");
-
-                    
-
-                }
-                return true; //Successfully saved Habit
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message);
-                return false; // Failed to successfully save Habit
             }
         }
     }
