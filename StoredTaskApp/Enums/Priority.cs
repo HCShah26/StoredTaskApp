@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace StoredTaskApp.Enums
 {
-    // Priority holds thew following priority values -1 (Low), 0 (Normal) & 1 (High)
-    // It has two methods
-    //      ++ (To increment priority by 1)
-    //      -- (To decrement priority by 1)
-
-    public struct Priority
+    /// <summary>
+    /// Priority holds thew following priority values -1 (Low), 0 (Normal) & 1 (High)
+    /// It has two methods
+    ///     ++ (To increment priority by 1)
+    ///     -- (To decrement priority by 1)
+    ///     
+    /// Additionally added IComparable interface to implement Sort method
+    /// </summary>
+    public struct Priority : IComparable<Priority>
     {
         public int Value;
 
@@ -26,6 +30,16 @@ namespace StoredTaskApp.Enums
             {
                 Value = 0; //Default value 0 -- Normal
             }
+        }
+
+        /// <summary>
+        /// Implemented the CompareTo method used in the Sorting
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public int CompareTo(Priority other)
+        {
+            return this.Value.CompareTo(other.Value); 
         }
 
         public static Priority operator ++(Priority a)

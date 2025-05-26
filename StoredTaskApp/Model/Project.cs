@@ -90,7 +90,7 @@ namespace StoredTaskApp.Model
                 else
                 {
                     int completedTasks = base.Count - base.Count_Of_Incomplete_Tasks; //Calculate the no. of completed tasks
-                    return (double)(completedTasks / base.Count * 100); //Calculate the percentage of tasks completed
+                    return ((double)completedTasks / base.Count) * 100; //Calculate the percentage of tasks completed
                 }
             }
         }

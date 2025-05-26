@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using Windows.ApplicationModel.UserActivities;
+using StoredTaskApp.Model.Comparer;
 
 namespace StoredTaskApp.Model
 {
@@ -82,16 +85,45 @@ namespace StoredTaskApp.Model
         {
             get
             {
+                SortTasks();
                 return _tasks;
             }
+        }
+
+        public List<Task> GetTasksSortedByDescription()
+        {
+            var sorted = new List<StoredTaskApp.Model.Task>(_tasks);
+            sorted.Sort(new DescriptionComparer());
+            return sorted;
+        }
+
+        public List<Task> GetTasksSortedByPriority()
+        {
+            var sorted = new List<StoredTaskApp.Model.Task>(_tasks);
+            sorted.Sort(new PriorityComparer());
+            return sorted;
         }
 
         public virtual bool Add_Task_To_List(Task task)
         {
             _tasks.Add(task);
+            task.PropertyChanged += Task_PropertyChanged; 
+            SortTasks();
             return true; //Task added
         }
 
+        private void Task_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Task.Description))
+            {
+                SortTasks();
+            }
+        }
+
+        private void SortTasks()
+        {
+            _tasks.Sort();
+        }
         public void Display_Tasks()
         {
             if (_tasks != null)
@@ -107,7 +139,10 @@ namespace StoredTaskApp.Model
                 List<Task> filteredList = new List<Task>(); //Create a new list to only store incomplete tasks
                 foreach (Task task in _tasks)
                     if (task.Task_Status == false)
+                    {
                         filteredList.Add(task);
+                        filteredList.Sort();
+                    }
 
                 _tasks = filteredList; //Save the incomplete task list back to the task list
             }
