@@ -38,7 +38,11 @@ namespace StoredTaskApp.Model.Comparer
                 return 0;
             }
 
-            int dateCompare = Nullable.Compare(task1.Task_Completion_Date, task2.Task_Completion_Date);
+            // Compare only the date parts (ignore time)
+            DateTime? date1 = task1.Task_Completion_Date?.Date;
+            DateTime? date2 = task2.Task_Completion_Date?.Date;
+
+            int dateCompare = Nullable.Compare(date1, date2);
             if (dateCompare != 0)
             {
                 return dateCompare;

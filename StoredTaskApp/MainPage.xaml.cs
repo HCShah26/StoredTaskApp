@@ -57,22 +57,58 @@ namespace StoredTaskApp
                 DisplayTaskCollection(my_TaskCollection);
             }
 
-            Debug.WriteLine("Test sort by description");
-            List<StoredTaskApp.Model.Task> sortByDescription = my_TaskCollection.TaskLists[1].GetTasksSortedByDescription();
-            foreach (var currTask in sortByDescription)
+            // Create an index of all sorted by description
+
+            Debug.WriteLine("Create two indexes for all tasks by priority and description");
+            List<StoredTaskApp.Model.Task> priorityIndexForAllTasks = new List<StoredTaskApp.Model.Task>();
+            List<StoredTaskApp.Model.Task> descriptionIndexForAllTasks = new List<StoredTaskApp.Model.Task>();
+            foreach (TaskList taskList in my_TaskCollection.TaskLists)
+            {
+                priorityIndexForAllTasks.AddRange(taskList.ReturnTasks.ToList());
+                descriptionIndexForAllTasks.AddRange(taskList.ReturnTasks.ToList());
+            }
+
+            Debug.WriteLine("Display Priority Index unsorted");
+            foreach (var currTask in priorityIndexForAllTasks)
             {
                 Log_Debug_Message(currTask);
             }
 
-            Debug.WriteLine("Test sort by priority");
-            //Changing priority for some tasks!
-            TaskList tempList = my_TaskCollection.TaskLists[1];
-            List<StoredTaskApp.Model.Task> sortByPriority = tempList.GetTasksSortedByPriority();
-            foreach (var currTask in sortByDescription)
+            // Sort all tasks by Priority
+            PriorityComparer priorityComparer = new PriorityComparer();
+            priorityIndexForAllTasks.Sort(priorityComparer);
+
+            Debug.WriteLine("Display Priority Index sorted");
+            foreach (var currTask in priorityIndexForAllTasks)
             {
                 Log_Debug_Message(currTask);
             }
 
+            Debug.WriteLine("Display Description Index unsorted");
+            foreach (var currTask in descriptionIndexForAllTasks)
+            {
+                Log_Debug_Message(currTask);
+            }
+
+            // Sort all tasks by Description
+            DescriptionComparer descriptionComparer = new DescriptionComparer();
+            descriptionIndexForAllTasks.Sort(descriptionComparer);
+
+            Debug.WriteLine("Display Description Index sorted");
+            foreach (var currTask in descriptionIndexForAllTasks)
+            {
+                Log_Debug_Message(currTask);
+            }
+
+            // Test Search functionality
+            Priority tempPriority = new Priority();
+            string dateString = "5/27/2025 12:00:00 AM";
+            DateTime parsedDate;
+
+            bool success = DateTime.TryParseExact(dateString, "M/d/yyyy hh:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out parsedDate);
+            StoredTaskApp.Model.Task dueDatenPriorityToSearchFor = new Model.Task("", "", false, tempPriority, DateTime.Now, parsedDate);
+            var index = descriptionIndexForAllTasks.BinarySearch(dueDatenPriorityToSearchFor);
+            //Todo Continue here
         }
 
         /// <summary>

@@ -62,8 +62,9 @@ namespace StoredTaskApp.Model
                             Debug.WriteLineIf(debugFlag, $"TaskList count is {taskList.Count}");
                             Debug.WriteLineIf(debugFlag,$"TaskList Name is {taskList.Name}");
 
-                            foreach (var taskitem in (List<Task>)taskList.ReturnTasks)
-                            {
+                            foreach (var taskitem in taskList.ReturnTasks.ToList())
+                            //foreach (var taskitem in (List<Task>)taskList.ReturnTasks)
+                                {
                                 writer.Write(taskitem.GetType().ToString());
                                 Debug.WriteLineIf(debugFlag, $"  Task type is '{taskitem.GetType().ToString()}'");
                                 switch (taskitem.GetType().ToString())
