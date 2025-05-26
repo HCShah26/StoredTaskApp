@@ -68,6 +68,7 @@ namespace StoredTaskApp.Model
                 _taskCollection = new List<TaskList>();
 
             _taskCollection.Add(tasklist);
+
         }
 
         public void Remove_All_Completed_Tasks()

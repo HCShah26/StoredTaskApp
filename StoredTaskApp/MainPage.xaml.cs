@@ -1,5 +1,6 @@
 ﻿using StoredTaskApp.Enums;
 using StoredTaskApp.Model;
+using StoredTaskApp.Model.Comparer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -54,6 +55,22 @@ namespace StoredTaskApp
             {
                 //Display loaded data from binary file
                 DisplayTaskCollection(my_TaskCollection);
+            }
+
+            Debug.WriteLine("Test sort by description");
+            List<StoredTaskApp.Model.Task> sortByDescription = my_TaskCollection.TaskLists[1].GetTasksSortedByDescription();
+            foreach (var currTask in sortByDescription)
+            {
+                Log_Debug_Message(currTask);
+            }
+
+            Debug.WriteLine("Test sort by priority");
+            //Changing priority for some tasks!
+            TaskList tempList = my_TaskCollection.TaskLists[1];
+            List<StoredTaskApp.Model.Task> sortByPriority = tempList.GetTasksSortedByPriority();
+            foreach (var currTask in sortByDescription)
+            {
+                Log_Debug_Message(currTask);
             }
 
         }
@@ -308,7 +325,7 @@ namespace StoredTaskApp
             Log_Debug_Message(habit1);
 
             Debug.WriteLine("Create Habit Task 3");
-            habit2 = new Habit("Update resume", "", RepeatCycle.Annually);
+            habit2 = new Habit("Update resume", "", RepeatCycle.Weekly);
             Log_Debug_Message(habit2);
             habit2.Change_Task_Status();
 
@@ -342,7 +359,7 @@ namespace StoredTaskApp
             //Create Tasklist
             tasklist0 = CreateTaskList0(task0, task1, task2, task3, repeatingTask0);
 
-            tasklist1 = CreateTaskList1(task2, task3, habit0, repeatingTask0);
+            tasklist1 = CreateTaskList1(task0, task1, task2, task3, habit0, habit1, habit2, repeatingTask0);
 
             tasklist2 = CreateTaskList2(task0, task3);
 
@@ -378,7 +395,7 @@ namespace StoredTaskApp
             Log_Debug_Message(taskCollection);
 
             Debug.WriteLine("Removing completed tasks from all lists");
-            taskCollection.Remove_All_Completed_Tasks();
+            //taskCollection.Remove_All_Completed_Tasks();
             Log_Debug_Message(taskCollection);
 
             Debug.WriteLine($"Adding Project (Pre-Construction Phase) to Collection - Count = {project.Count} & Incomplete count = {project.Count_Of_Incomplete_Tasks}");
@@ -396,7 +413,8 @@ namespace StoredTaskApp
         /// <param name="repeatTask"></param>
         /// <returns>TaskList</returns>
         private TaskList CreateTaskList0(StoredTaskApp.Model.Task task0, StoredTaskApp.Model.Task task1, 
-                                         StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3, RepeatingTask repeatTask)
+                                         StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3, 
+                                         RepeatingTask repeatTask)
         {
             string errorMsg = "";
             TaskList tasklist;
@@ -442,31 +460,67 @@ namespace StoredTaskApp
         /// <summary>
         /// Creates the second TaskList object
         /// </summary>
+        /// <param name="task0"></param>
+        /// <param name="task1"></param>
         /// <param name="task2"></param>
         /// <param name="task3"></param>
-        /// <param name="habit"></param>
+        /// <param name="habit0"></param>
+        /// <param name="habit1"></param>
+        /// <param name="habit2"></param>
         /// <param name="repeatingTask"></param>
         /// <returns>TaskList</returns>
-        private TaskList CreateTaskList1(StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3, 
-                                         Habit habit, RepeatingTask repeatingTask)
+        private TaskList CreateTaskList1(StoredTaskApp.Model.Task task0, StoredTaskApp.Model.Task task1,
+                                         StoredTaskApp.Model.Task task2, StoredTaskApp.Model.Task task3, 
+                                         Habit habit0, Habit habit1, Habit habit2, RepeatingTask repeatingTask)
         {
             string errorMsg;
             TaskList tasklist;
+            Priority currPriority;
 
             Debug.WriteLine("Create new TaskList (Another List)");
             tasklist = Add_New_Task_List("Another List");
 
+            Debug.WriteLine("Add Task 1 to TaskList (Another List)");
+            errorMsg = "Failed to add Task 1 to TaskList (Another List)";
+            currPriority = task0.Task_Priority;
+            currPriority--;
+            task0.Task_Priority = currPriority; 
+            tasklist = AddTaskToList(tasklist, task0, errorMsg);
+
+            Debug.WriteLine("Add Task 2 to TaskList (Another List)");
+            errorMsg = "Failed to add Task 2 to TaskList (Another List)";
+            currPriority = task1.Task_Priority;
+            currPriority++;
+            task1.Task_Priority = currPriority;
+            tasklist = AddTaskToList(tasklist, task1, errorMsg);
+
             Debug.WriteLine("Add Task 3 to TaskList (Another List)");
             errorMsg = "Failed to add Task 3 to TaskList (Another List)";
+            currPriority = task2.Task_Priority;
+            currPriority--;
+            currPriority--;
+            task2.Task_Priority = currPriority;
             tasklist = AddTaskToList(tasklist, task2, errorMsg);
 
             Debug.WriteLine("Add Task 4 to TaskList (Another List)");
             errorMsg = "Failed to add Task 4 to TaskList (Another List)";
+            currPriority = task3.Task_Priority;
+            currPriority++;
+            currPriority++; 
+            task3.Task_Priority = currPriority++;
             tasklist = AddTaskToList(tasklist, task3, errorMsg);
 
-            Debug.WriteLine("Add a Habit Task to TaskList (Another List)");
-            errorMsg = "Failed to add Task 4 to TaskList (Another List)";
-            tasklist = AddTaskToList(tasklist, habit, errorMsg);
+            Debug.WriteLine("Add a Habit 1 to TaskList (Another List)");
+            errorMsg = "Failed to add Habit 1 to TaskList (Another List)";
+            tasklist = AddTaskToList(tasklist, habit0, errorMsg);
+
+            Debug.WriteLine("Add a Habit 2 to TaskList (Another List)");
+            errorMsg = "Failed to add Habit 2 to TaskList (Another List)";
+            tasklist = AddTaskToList(tasklist, habit1, errorMsg);
+
+            Debug.WriteLine("Add a Habit 3 to TaskList (Another List)");
+            errorMsg = "Failed to add Habit 3 to TaskList (Another List)";
+            tasklist = AddTaskToList(tasklist, habit2, errorMsg);
 
             Debug.WriteLine("Add a Repeating Task 4 to TaskList (Another List)");
             errorMsg = "Failed to add Task 4 to TaskList (Another List)";
@@ -477,7 +531,6 @@ namespace StoredTaskApp
             Debug.WriteLine("");
 
             return tasklist;
-
         }
 
         /// <summary>
@@ -748,7 +801,10 @@ namespace StoredTaskApp
         private void Log_Debug_Message(StoredTaskApp.Model.Task task)
         {
             Debug.WriteLine("Task object");
-            Debug.WriteLine($"Description: '{task.Description}', Notes: '{task.Notes}', Task Priority: {task.Task_Priority.Display_Priority()}, Task Status: {task.Task_Status}, Task Creation Date: {task.Task_Creation_Date}");
+            Debug.WriteLine($"Description: '{task.Description}', " +
+                $"Notes: '{task.Notes}', Task Priority: {task.Task_Priority.Display_Priority()}, " +
+                $"Task Status: {task.Task_Status}, Task Creation Date: {task.Task_Creation_Date}, " +
+                $"Task Completion Date: '{task.Task_Completion_Date}'");
             Debug.WriteLine("");
         }
 

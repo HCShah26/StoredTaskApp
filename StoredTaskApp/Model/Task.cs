@@ -1,6 +1,7 @@
 ﻿using StoredTaskApp.Enums;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
@@ -14,8 +15,10 @@ namespace StoredTaskApp.Model
     ///     6 properties Description, Notes, Task_Status, Priority, Task_Creation_Date & Task_Completion_Date
     ///     1 method Change Task Status
     /// </summary>
-    public class Task
+    public class Task : IComparable<Task>, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         private string _description; //Should not be blank
         private string _notes;
         private bool _task_status; // This indicates whether the task is completed or not
@@ -50,6 +53,24 @@ namespace StoredTaskApp.Model
             _task_completion_date = task_completion_date;
         }
 
+        public int CompareTo(Task other)
+        {
+            //Check if other is null
+            if (other == null)
+            { 
+                return 1; 
+            }
+
+            // Compare by Task_Completion_Date
+            int dateComparison = Nullable.Compare(this.Task_Completion_Date, other.Task_Completion_Date);
+            if (dateComparison != 0)
+            {
+                return dateComparison;
+            }
+
+            // If Task_Completion_Date matches, then compare with Priority
+            return this.Task_Priority.CompareTo(other.Task_Priority);
+        }
         public string Description
         {
             get
@@ -69,6 +90,7 @@ namespace StoredTaskApp.Model
                     //Before setting the description value, check if it's empty before assigning the "New Task {Today's date}"
                     if (_description == string.Empty)
                     _description = "New Task " + DateTime.Now.ToShortDateString();
+                OnPropertyChanged(nameof(Description));
             }
         }
 
@@ -163,6 +185,11 @@ namespace StoredTaskApp.Model
             {
                 _task_completion_date = DateTime.Now;
             }
+        }
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
     }
